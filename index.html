@@ -22,7 +22,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
         
-        /* Ligne du haut : Titre + Actions */
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -33,14 +32,13 @@
         }
         .header-actions h3 { margin: 0; font-size: 18px; color: #fff; }
         
-        .header-actions select { padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; color: #222; font-size: 13px; background: #fff; }
+        .controls { display: flex; gap: 15px; align-items: center; }
+        .controls select { padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; color: #222; font-size: 13px; background: #fff; }
         
-        /* Bouton d'import (bleu hitech) */
-        .btn-import { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; transition: 0.2s; }
+        .btn-import { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; transition: 0.2s; border: none; }
         .btn-import:hover { background: #357abd; }
         input[type="file"] { display: none; }
 
-        /* Ligne du bas : Les 4 cases */
         .dashboard-top { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
@@ -61,7 +59,8 @@
         .dep-ajuste { color: #e74c3c; font-weight: bold; background: #fff; padding: 2px 5px; border-radius: 4px; display: inline-block; }
 
         /* TABLEAU */
-        table { width: 100%; border-collapse: collapse; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { background: #e9ecef; color: #333; padding: 10px; font-size: 13px; border: 1px solid #ddd; }
         td { padding: 8px; border: 1px solid #eee; text-align: center; vertical-align: middle; }
         tr:nth-child(even) { background-color: #fcfcfc; }
@@ -69,11 +68,19 @@
         
         td input[type="text"] { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #333; font-family: monospace;}
         td input[type="text"]:focus { border-color: #007bff; outline: none; background: #f0f8ff; }
-        
         td select { width: 75px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #555; background: #f8f9fa; cursor: pointer;}
         td select:focus { border-color: #007bff; outline: none; }
-
         .val-cumul { color: #007bff; font-weight: bold; }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 768px) {
+            .header-actions { flex-direction: column; align-items: stretch; gap: 15px; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .btn-import { text-align: center; }
+            .dashboard-top { grid-template-columns: 1fr 1fr; row-gap: 20px; }
+            .box:nth-child(2) { border-right: none; }
+            .box span, .box b { font-size: 1.2em; }
+        }
     </style>
 </head>
 <body>
@@ -83,7 +90,7 @@
 
     <div class="unified-header">
         <div class="header-actions">
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                 <h3 id="monthTitle">Mois en cours</h3>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <select id="baseHoraire" onchange="changerBase()">
@@ -93,8 +100,8 @@
                     <span id="baseDesc" style="color: #95a5a6; font-size: 11px; font-weight: normal;"></span>
                 </div>
             </div>
-            <div>
-                <label for="excelFileInput" class="btn-import">📥 Mettre à jour depuis l'export Excel</label>
+            <div class="controls">
+                <label for="excelFileInput" class="btn-import">📥 Mettre à jour (Excel)</label>
                 <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="importerFichierExcel(event)">
             </div>
         </div>
@@ -119,24 +126,25 @@
         </div>
     </div>
     
-    <table id="mainTable">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Objectif</th>
-                <th>Temps Travaillé</th>
-                <th>Solde du Jour</th>
-                <th>Avance Globale (Fin de journée)</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <div class="table-responsive">
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Objectif</th>
+                    <th>Temps Travaillé</th>
+                    <th>Solde du Jour</th>
+                    <th>Avance Globale</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     const DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-    // Conversion des heures décimales en temps réel
     const OBJECTIVES = [
         { text: "0", val: "00:00" },
         { text: "3.55", val: "03:33" }, 
@@ -178,7 +186,6 @@
         return sign + (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
     }
 
-    // Gestion de la base
     function changerBase() {
         let base = document.getElementById('baseHoraire').value;
         localStorage.setItem('synBaseHoraire', base);
@@ -190,7 +197,7 @@
         if (base === "9") {
             return (dayOfWeek === 4) ? "08:00" : "09:00";
         } else {
-            return (dayOfWeek === 4) ? "07:07" : "08:00"; // 7,12h = 7h07
+            return (dayOfWeek === 4) ? "07:07" : "08:00";
         }
     }
 
@@ -203,7 +210,6 @@
         let monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
         document.getElementById('monthTitle').innerText = `${monthNames[month]} ${year}`;
 
-        // Restaurer la base choisie et mettre à jour le texte explicatif
         let baseHoraire = localStorage.getItem('synBaseHoraire') || "9";
         document.getElementById('baseHoraire').value = baseHoraire;
         document.getElementById('baseDesc').innerText = baseHoraire === "9" 
@@ -223,7 +229,6 @@
 
             let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
             
-            // On récupère l'objectif sauvegardé s'il existe, sinon on applique la base
             let defaultReqH = getDefaultReqH(dayOfWeek);
             let reqH = savedObj[dateKey] !== undefined ? savedObj[dateKey] : defaultReqH;
             
@@ -282,7 +287,6 @@
             let objSelect = document.getElementById(`obj_${dateKey}`);
             let reqMins = objSelect ? timeToMins(objSelect.value) : timeToMins(defaultReqH);
             
-            // Ne sauvegarde que si l'utilisateur a sélectionné une valeur différente de la base
             if (objSelect && objSelect.value !== defaultReqH) {
                 objToSave[dateKey] = objSelect.value;
             }
@@ -320,7 +324,6 @@
         else if (cumulativeMins < 0) globalBox.className = "bal-neg";
         else globalBox.className = "bal-zero";
 
-        // Calcul Départ (Aujourd'hui)
         let todayDateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
         let todayObjSelect = document.getElementById(`obj_${todayDateKey}`);
         let reqTodayMins = todayObjSelect ? timeToMins(todayObjSelect.value) : timeToMins(getDefaultReqH(now.getDay()));
