@@ -52,8 +52,10 @@
         
         td input[type="text"] { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #333; font-family: monospace;}
         td input[type="text"]:focus { border-color: #007bff; outline: none; background: #f0f8ff; }
-        td select { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; cursor: pointer; color: #333; }
         
+        td select { width: 70px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #555; background: #f8f9fa; cursor: pointer;}
+        td select:focus { border-color: #007bff; outline: none; }
+
         .val-cumul { color: #007bff; font-weight: bold; }
     </style>
 </head>
@@ -104,6 +106,20 @@
 <script>
     const DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
+    // Tes objectifs pré-définis (val correspond au temps calculable HH:MM)
+    const OBJECTIVES = [
+        { text: "0", val: "00:00" },
+        { text: "3.55", val: "03:55" },
+        { text: "4", val: "04:00" },
+        { text: "5", val: "05:00" },
+        { text: "5.33", val: "05:33" },
+        { text: "6", val: "06:00" },
+        { text: "7", val: "07:00" },
+        { text: "7.12", val: "07:12" },
+        { text: "8", val: "08:00" },
+        { text: "9", val: "09:00" }
+    ];
+
     function formatTime(e) {
         let v = e.target.value;
         if (e.inputType === 'deleteContentBackward') return;
@@ -139,7 +155,7 @@
         let daysInMonth = new Date(year, month + 1, 0).getDate();
         
         let savedData = JSON.parse(localStorage.getItem('synDataV3')) || {};
-        let savedObj = JSON.parse(localStorage.getItem('synObjV3')) || {};
+        let savedObj = JSON.parse(localStorage.getItem('synObjConfig')) || {};
         
         let tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -151,18 +167,18 @@
 
             let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
             
-            // On récupère l'objectif sauvegardé, sinon on applique la règle (Jeudi 8h, sinon 9h)
-            let defaultReqH = (dayOfWeek === 4) ? 8 : 9;
+            // On récupère l'objectif (si rien sauvegardé : 8h le Jeudi, 9h les autres jours)
+            let defaultReqH = (dayOfWeek === 4) ? "08:00" : "09:00"; 
             let reqH = savedObj[dateKey] !== undefined ? savedObj[dateKey] : defaultReqH;
             
             let workVal = savedData[dateKey] || "";
 
-            // Construction de la liste déroulante 0 à 12
+            // Générer le menu déroulant
             let optionsHTML = '';
-            for (let h = 0; h <= 12; h++) {
-                let selected = (h == reqH) ? 'selected' : '';
-                optionsHTML += `<option value="${h}" ${selected}>${h}h</option>`;
-            }
+            OBJECTIVES.forEach(obj => {
+                let selected = (obj.val === reqH) ? 'selected' : '';
+                optionsHTML += `<option value="${obj.val}" ${selected}>${obj.text}h</option>`;
+            });
 
             let tr = document.createElement('tr');
             if (i === now.getDate()) tr.className = "today-row"; 
@@ -207,20 +223,16 @@
 
             let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
             
-            // On récupère la valeur de la liste déroulante pour calculer l'objectif
             let objSelect = document.getElementById(`obj_${dateKey}`);
-            let reqMins = objSelect ? parseInt(objSelect.value) * 60 : ((dayOfWeek === 4) ? 8 : 9) * 60;
-            
-            if (objSelect) {
-                objToSave[dateKey] = parseInt(objSelect.value);
-            }
-            
             let workInput = document.getElementById(`work_${dateKey}`);
             let soldeTd = document.getElementById(`solde_${dateKey}`);
             let cumulTd = document.getElementById(`cumul_${dateKey}`);
 
-            if (!workInput) continue;
+            if (!workInput || !objSelect) continue;
+            
             let workTime = workInput.value;
+            let reqMins = timeToMins(objSelect.value); // L'objectif lu depuis la liste box
+            objToSave[dateKey] = objSelect.value; // On le garde en mémoire
 
             if (workTime && workTime.length >= 4) {
                 dataToSave[dateKey] = workTime;
@@ -248,10 +260,10 @@
         else if (cumulativeMins < 0) globalBox.className = "bal-neg";
         else globalBox.className = "bal-zero";
 
-        // Détection de l'objectif spécifique au jour en cours (Aujourd'hui)
+        // Calcul du départ pour le jour en cours
         let todayDateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
         let todayObjSelect = document.getElementById(`obj_${todayDateKey}`);
-        let reqTodayMins = todayObjSelect ? parseInt(todayObjSelect.value) * 60 : (now.getDay() === 4 ? 8 : 9) * 60;
+        let reqTodayMins = todayObjSelect ? timeToMins(todayObjSelect.value) : ((now.getDay() === 4) ? 8 : 9) * 60;
 
         if (todayArrival && todayArrival.length >= 4) {
             let arrMins = timeToMins(todayArrival);
@@ -266,7 +278,7 @@
         }
 
         localStorage.setItem('synDataV3', JSON.stringify(dataToSave));
-        localStorage.setItem('synObjV3', JSON.stringify(objToSave));
+        localStorage.setItem('synObjConfig', JSON.stringify(objToSave));
     }
 
     function importerFichierExcel(event) {
