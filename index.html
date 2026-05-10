@@ -12,21 +12,44 @@
         
         h2 { text-align: center; color: #1877f2; margin: 0 0 20px 0; font-size: 20px; }
 
-        /* HEADER DE CALCUL DU JOUR */
+        /* HEADER UNIFIÉ (TOUT EN UN) */
+        .unified-header {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        /* Ligne du haut : Titre + Actions */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4a5b6c;
+        }
+        .header-actions h3 { margin: 0; font-size: 18px; color: #fff; }
+        
+        .header-actions select { padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; color: #222; font-size: 13px; background: #fff; }
+        
+        /* Bouton d'import (bleu hitech) */
+        .btn-import { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; transition: 0.2s; }
+        .btn-import:hover { background: #357abd; }
+        input[type="file"] { display: none; }
+
+        /* Ligne du bas : Les 4 cases */
         .dashboard-top { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
             gap: 10px; 
-            background: #2c3e50; 
-            color: white; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
             align-items: center;
         }
         .box { text-align: center; border-right: 1px solid #4a5b6c; padding: 0 5px; }
         .box:last-child { border-right: none; }
-        .box label { display: block; font-size: 0.8em; color: #bdc3c7; text-transform: uppercase; margin-bottom: 8px; font-weight: bold;}
+        .box .box-title { display: block; font-size: 0.8em; color: #bdc3c7; text-transform: uppercase; margin-bottom: 8px; font-weight: bold;}
         .box span, .box b { font-size: 1.4em; display: block; }
         
         .box input[type="text"] { width: 75px; padding: 5px; text-align: center; border-radius: 4px; border: none; font-weight: bold; font-family: monospace; font-size: 1.2em; color: #222; }
@@ -37,13 +60,7 @@
         .dep-normal { color: #3498db; font-weight: bold; }
         .dep-ajuste { color: #e74c3c; font-weight: bold; background: #fff; padding: 2px 5px; border-radius: 4px; display: inline-block; }
 
-        /* BOUTON D'IMPORT */
-        .import-wrapper { background: #eef2f5; padding: 15px; border-radius: 6px; border: 1px dashed #bdc3c7; margin-bottom: 20px; text-align: center; }
-        .import-wrapper label { background: #27ae60; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-block; }
-        .import-wrapper label:hover { background: #2ecc71; }
-        input[type="file"] { display: none; }
-
-        /* TABLEAU ÉPURÉ */
+        /* TABLEAU */
         table { width: 100%; border-collapse: collapse; }
         th { background: #e9ecef; color: #333; padding: 10px; font-size: 13px; border: 1px solid #ddd; }
         td { padding: 8px; border: 1px solid #eee; text-align: center; vertical-align: middle; }
@@ -53,7 +70,7 @@
         td input[type="text"] { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #333; font-family: monospace;}
         td input[type="text"]:focus { border-color: #007bff; outline: none; background: #f0f8ff; }
         
-        td select { width: 70px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #555; background: #f8f9fa; cursor: pointer;}
+        td select { width: 75px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #555; background: #f8f9fa; cursor: pointer;}
         td select:focus { border-color: #007bff; outline: none; }
 
         .val-cumul { color: #007bff; font-weight: bold; }
@@ -64,29 +81,42 @@
 <div class="container">
     <h2>⏱ Tableau de Bord Synerion</h2>
 
-    <div class="dashboard-top">
-        <div class="box">
-            <label>Avance/Retard Cumulé</label>
-            <span id="globalBalance" class="bal-zero">00:00</span>
+    <div class="unified-header">
+        <div class="header-actions">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h3 id="monthTitle">Mois en cours</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <select id="baseHoraire" onchange="changerBase()">
+                        <option value="9">Base 9</option>
+                        <option value="8">Base 8</option>
+                    </select>
+                    <span id="baseDesc" style="color: #95a5a6; font-size: 11px; font-weight: normal;"></span>
+                </div>
+            </div>
+            <div>
+                <label for="excelFileInput" class="btn-import">📥 Mettre à jour depuis l'export Excel</label>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="importerFichierExcel(event)">
+            </div>
         </div>
-        <div class="box">
-            <label>Arrivée Aujourd'hui</label>
-            <input type="text" id="todayArrival" placeholder="HH:MM" oninput="formatTime(event); calculerTout();" maxlength="5">
-        </div>
-        <div class="box">
-            <label>Départ Normal</label>
-            <b id="normalDepart" class="dep-normal">--:--</b>
-        </div>
-        <div class="box">
-            <label>Départ Ajusté</label>
-            <b id="adjustedDepart" class="dep-ajuste">--:--</b>
-        </div>
-    </div>
 
-    <div class="import-wrapper">
-        <span style="margin-right: 15px; font-weight: bold; color: #555;">Mettre à jour depuis l'export Synerion :</span>
-        <label for="excelFileInput">📗 Importer le fichier Excel (.xlsx)</label>
-        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="importerFichierExcel(event)">
+        <div class="dashboard-top">
+            <div class="box">
+                <span class="box-title">Avance/Retard Cumulé</span>
+                <span id="globalBalance" class="bal-zero">00:00</span>
+            </div>
+            <div class="box">
+                <span class="box-title">Arrivée Aujourd'hui</span>
+                <input type="text" id="todayArrival" placeholder="HH:MM" oninput="formatTime(event); calculerTout();" maxlength="5">
+            </div>
+            <div class="box">
+                <span class="box-title">Départ Normal</span>
+                <b id="normalDepart" class="dep-normal">--:--</b>
+            </div>
+            <div class="box">
+                <span class="box-title">Départ Ajusté</span>
+                <b id="adjustedDepart" class="dep-ajuste">--:--</b>
+            </div>
+        </div>
     </div>
     
     <table id="mainTable">
@@ -106,16 +136,16 @@
 <script>
     const DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-    // Tes objectifs pré-définis (val correspond au temps calculable HH:MM)
+    // Conversion des heures décimales en temps réel
     const OBJECTIVES = [
         { text: "0", val: "00:00" },
-        { text: "3.55", val: "03:55" },
+        { text: "3.55", val: "03:33" }, 
         { text: "4", val: "04:00" },
         { text: "5", val: "05:00" },
-        { text: "5.33", val: "05:33" },
+        { text: "5.33", val: "05:20" },
         { text: "6", val: "06:00" },
         { text: "7", val: "07:00" },
-        { text: "7.12", val: "07:12" },
+        { text: "7.12", val: "07:07" }, 
         { text: "8", val: "08:00" },
         { text: "9", val: "09:00" }
     ];
@@ -148,12 +178,38 @@
         return sign + (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
     }
 
+    // Gestion de la base
+    function changerBase() {
+        let base = document.getElementById('baseHoraire').value;
+        localStorage.setItem('synBaseHoraire', base);
+        genererMois(); 
+    }
+
+    function getDefaultReqH(dayOfWeek) {
+        let base = localStorage.getItem('synBaseHoraire') || "9";
+        if (base === "9") {
+            return (dayOfWeek === 4) ? "08:00" : "09:00";
+        } else {
+            return (dayOfWeek === 4) ? "07:07" : "08:00"; // 7,12h = 7h07
+        }
+    }
+
     function genererMois() {
         let now = new Date();
         let year = now.getFullYear();
         let month = now.getMonth();
         let daysInMonth = new Date(year, month + 1, 0).getDate();
         
+        let monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+        document.getElementById('monthTitle').innerText = `${monthNames[month]} ${year}`;
+
+        // Restaurer la base choisie et mettre à jour le texte explicatif
+        let baseHoraire = localStorage.getItem('synBaseHoraire') || "9";
+        document.getElementById('baseHoraire').value = baseHoraire;
+        document.getElementById('baseDesc').innerText = baseHoraire === "9" 
+            ? "(Dim-Mer: 9h | Jeu: 8h)" 
+            : "(Dim-Mer: 8h | Jeu: 7,12h)";
+
         let savedData = JSON.parse(localStorage.getItem('synDataV3')) || {};
         let savedObj = JSON.parse(localStorage.getItem('synObjConfig')) || {};
         
@@ -167,13 +223,12 @@
 
             let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
             
-            // On récupère l'objectif (si rien sauvegardé : 8h le Jeudi, 9h les autres jours)
-            let defaultReqH = (dayOfWeek === 4) ? "08:00" : "09:00"; 
+            // On récupère l'objectif sauvegardé s'il existe, sinon on applique la base
+            let defaultReqH = getDefaultReqH(dayOfWeek);
             let reqH = savedObj[dateKey] !== undefined ? savedObj[dateKey] : defaultReqH;
             
             let workVal = savedData[dateKey] || "";
 
-            // Générer le menu déroulant
             let optionsHTML = '';
             OBJECTIVES.forEach(obj => {
                 let selected = (obj.val === reqH) ? 'selected' : '';
@@ -222,17 +277,22 @@
             if (dayOfWeek === 5 || dayOfWeek === 6) continue;
 
             let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
-            
+            let defaultReqH = getDefaultReqH(dayOfWeek);
+
             let objSelect = document.getElementById(`obj_${dateKey}`);
+            let reqMins = objSelect ? timeToMins(objSelect.value) : timeToMins(defaultReqH);
+            
+            // Ne sauvegarde que si l'utilisateur a sélectionné une valeur différente de la base
+            if (objSelect && objSelect.value !== defaultReqH) {
+                objToSave[dateKey] = objSelect.value;
+            }
+            
             let workInput = document.getElementById(`work_${dateKey}`);
             let soldeTd = document.getElementById(`solde_${dateKey}`);
             let cumulTd = document.getElementById(`cumul_${dateKey}`);
 
-            if (!workInput || !objSelect) continue;
-            
+            if (!workInput) continue;
             let workTime = workInput.value;
-            let reqMins = timeToMins(objSelect.value); // L'objectif lu depuis la liste box
-            objToSave[dateKey] = objSelect.value; // On le garde en mémoire
 
             if (workTime && workTime.length >= 4) {
                 dataToSave[dateKey] = workTime;
@@ -260,10 +320,10 @@
         else if (cumulativeMins < 0) globalBox.className = "bal-neg";
         else globalBox.className = "bal-zero";
 
-        // Calcul du départ pour le jour en cours
+        // Calcul Départ (Aujourd'hui)
         let todayDateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
         let todayObjSelect = document.getElementById(`obj_${todayDateKey}`);
-        let reqTodayMins = todayObjSelect ? timeToMins(todayObjSelect.value) : ((now.getDay() === 4) ? 8 : 9) * 60;
+        let reqTodayMins = todayObjSelect ? timeToMins(todayObjSelect.value) : timeToMins(getDefaultReqH(now.getDay()));
 
         if (todayArrival && todayArrival.length >= 4) {
             let arrMins = timeToMins(todayArrival);
