@@ -173,6 +173,18 @@
             border: none;
         }
 
+        .calendar-table td.conge::after {
+            content: '';
+            display: block;
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+        }
+
         .calendar-table td {
             border: 1px solid #ddd;
             padding: 0;
@@ -185,6 +197,7 @@
             font-weight: bold;
             font-size: 10px;
             transition: all 0.15s;
+            position: relative;
         }
 
         .calendar-table td.other-month {
@@ -198,10 +211,8 @@
         }
 
         .calendar-table td.conge {
-            background: #d4edff;
-            color: #3498db;
-            border: 2px solid #3498db;
-            font-weight: bold;
+            /* Point rouge ::after indique jour coché */
+            border: 2px dashed #999 !important;
         }
 
         .calendar-table td.fete {
@@ -829,22 +840,23 @@
                     if (isToday) {
                         cell.classList.add('today-highlight');
                         cell.innerText = d;
-                    } else if (feteType === 'fete') {
-                        cell.classList.add('fete');
-                        cell.innerText = d;
-                    } else if (feteType === 'veille') {
-                        cell.classList.add('veille');
-                        cell.innerText = d;
-                    } else if (feteType === 'hol_hamoed') {
-                        cell.classList.add('hol_hamoed');
-                        cell.innerText = d;
-                    } else if (isConge) {
-                        cell.classList.add('conge');
-                        cell.innerText = d;
-                    } else if (isWeekend) {
-                        cell.classList.add('weekend');
-                        cell.innerText = d;
                     } else {
+                        // Appliquer la classe de base d'abord
+                        if (feteType === 'fete') {
+                            cell.classList.add('fete');
+                        } else if (feteType === 'veille') {
+                            cell.classList.add('veille');
+                        } else if (feteType === 'hol_hamoed') {
+                            cell.classList.add('hol_hamoed');
+                        } else if (isWeekend) {
+                            cell.classList.add('weekend');
+                        }
+                        
+                        // PUIS ajouter conge si coché (s'ajoute aux classes précédentes)
+                        if (isConge) {
+                            cell.classList.add('conge');
+                        }
+                        
                         cell.innerText = d;
                     }
 
