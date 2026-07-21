@@ -388,15 +388,15 @@
             <div class="param-row">
                 <div class="param-item">
                     <label>Jours / An</label>
-                    <input type="number" id="joursParAn" value="20" step="0.5" onchange="recalculerMoisDepuisAn()">
+                    <input type="number" id="joursParAn" step="0.5" onchange="recalculerMoisDepuisAn(); sauvegarderParams()">
                 </div>
                 <div class="param-item">
                     <label>Jours / Mois</label>
-                    <input type="number" id="joursParMois" value="1.67" step="0.01" onchange="recalculerAnDepuisMois()">
+                    <input type="number" id="joursParMois" step="0.01" onchange="recalculerAnDepuisMois(); sauvegarderParams()">
                 </div>
                 <div class="param-item">
                     <label>Solde Début</label>
-                    <input type="number" id="soldeDebut" value="11.12" step="0.01" onchange="recalculerConges()">
+                    <input type="number" id="soldeDebut" step="0.01" onchange="recalculerConges(); sauvegarderParams()">
                 </div>
                 <div class="param-item">
                     <label>Total Posé</label>
@@ -750,17 +750,49 @@
 
     // ===== CONGÉS =====
 
+    function sauvegarderParams() {
+        let joursParAn = document.getElementById('joursParAn').value;
+        let joursParMois = document.getElementById('joursParMois').value;
+        let soldeDebut = document.getElementById('soldeDebut').value;
+        
+        try {
+            localStorage.setItem('synJoursParAn', joursParAn);
+            localStorage.setItem('synJoursParMois', joursParMois);
+            localStorage.setItem('synSoldeDebut', soldeDebut);
+        } catch(e) {
+            // localStorage non disponible
+        }
+    }
+
+    function chargerParams() {
+        try {
+            let joursParAn = localStorage.getItem('synJoursParAn');
+            let joursParMois = localStorage.getItem('synJoursParMois');
+            let soldeDebut = localStorage.getItem('synSoldeDebut');
+            
+            if (joursParAn) document.getElementById('joursParAn').value = joursParAn;
+            if (joursParMois) document.getElementById('joursParMois').value = joursParMois;
+            if (soldeDebut) document.getElementById('soldeDebut').value = soldeDebut;
+        } catch(e) {
+            // localStorage non disponible
+        }
+    }
+
     function recalculerMoisDepuisAn() {
-        let joursParAn = parseFloat(document.getElementById('joursParAn').value) || 20;
-        let joursParMois = (joursParAn / 12).toFixed(2);
-        document.getElementById('joursParMois').value = joursParMois;
+        let joursParAn = parseFloat(document.getElementById('joursParAn').value) || 0;
+        if (joursParAn > 0) {
+            let joursParMois = (joursParAn / 12).toFixed(2);
+            document.getElementById('joursParMois').value = joursParMois;
+        }
         recalculerConges();
     }
 
     function recalculerAnDepuisMois() {
-        let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 1.67;
-        let joursParAn = (joursParMois * 12).toFixed(2);
-        document.getElementById('joursParAn').value = joursParAn;
+        let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 0;
+        if (joursParMois > 0) {
+            let joursParAn = (joursParMois * 12).toFixed(2);
+            document.getElementById('joursParAn').value = joursParAn;
+        }
         recalculerConges();
     }
 
@@ -809,8 +841,8 @@
             }
         });
 
-        let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 11.12;
-        let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 1.67;
+        let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 0;
+        let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 0;
 
         // Rows
         for (let m = 0; m < 12; m++) {
@@ -899,8 +931,8 @@
 
     function genererResume() {
         let monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-        let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 11.12;
-        let cumulMensuel = parseFloat(document.getElementById('joursParMois').value) || 1.67;
+        let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 0;
+        let cumulMensuel = parseFloat(document.getElementById('joursParMois').value) || 0;
 
         let tbody = document.getElementById('resumeBody');
         tbody.innerHTML = '';
@@ -965,6 +997,9 @@
     // Init
     window.onload = function() {
         genererMois();
+        
+        // Charger les paramètres sauvegardés
+        chargerParams();
         
         // Initialiser conges vide
         conges = {};
