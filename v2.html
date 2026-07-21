@@ -770,9 +770,9 @@
             let joursParMois = localStorage.getItem('synJoursParMois');
             let soldeDebut = localStorage.getItem('synSoldeDebut');
             
-            if (joursParAn) document.getElementById('joursParAn').value = joursParAn;
-            if (joursParMois) document.getElementById('joursParMois').value = joursParMois;
-            if (soldeDebut) document.getElementById('soldeDebut').value = soldeDebut;
+            if (joursParAn !== null && joursParAn !== '') document.getElementById('joursParAn').value = joursParAn;
+            if (joursParMois !== null && joursParMois !== '') document.getElementById('joursParMois').value = joursParMois;
+            if (soldeDebut !== null && soldeDebut !== '') document.getElementById('soldeDebut').value = soldeDebut;
         } catch(e) {
             // localStorage non disponible
         }
