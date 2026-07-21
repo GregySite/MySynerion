@@ -750,6 +750,27 @@
 
     // ===== CONGÉS =====
 
+    function calculerFractionJour(dateStr, feteType) {
+        // Calcule la fraction de jour basée sur le type et le jour de la semaine
+        let date = new Date(dateStr);
+        let dayOfWeek = date.getDay();
+        
+        // Heures du jour : 9h (dim-mer), 8h (jeudi)
+        let heuresJour = (dayOfWeek === 4) ? 8 : 9;
+        
+        // Calcul basé sur le type de jour
+        if (feteType === 'veille') {
+            // Veille = 4h
+            return (4 / heuresJour).toFixed(3);
+        } else if (feteType === 'hol_hamoed') {
+            // Hol Hamoed = 6h
+            return (6 / heuresJour).toFixed(3);
+        } else {
+            // Jour normal ou fête = 1 jour
+            return 1;
+        }
+    }
+
     function sauvegarderParams() {
         let joursParAn = document.getElementById('joursParAn').value;
         let joursParMois = document.getElementById('joursParMois').value;
@@ -800,10 +821,12 @@
         let totalPosed = 0;
         Object.keys(conges).forEach(dateStr => {
             if (conges[dateStr] && conges[dateStr] !== false) {
-                totalPosed++;
+                let feteType = FETES[dateStr];
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                totalPosed += fraction;
             }
         });
-        document.getElementById('totalPosed').value = totalPosed.toString();
+        document.getElementById('totalPosed').value = totalPosed.toFixed(2);
         
         genererTableauCalendrier();
         genererResume();
@@ -831,13 +854,15 @@
         }
         table.appendChild(headerRow);
 
-        // Compter les jours posés par mois
+        // Compter les jours posés par mois (en fractions)
         let moisConges = {};
         Object.keys(conges).forEach(dateStr => {
             if (conges[dateStr] && conges[dateStr] !== false) {
                 let d = new Date(dateStr);
                 let mIndex = d.getMonth();
-                moisConges[mIndex] = (moisConges[mIndex] || 0) + 1;
+                let feteType = FETES[dateStr];
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                moisConges[mIndex] = (moisConges[mIndex] || 0) + fraction;
             }
         });
 
@@ -855,7 +880,7 @@
                 solde = solde - posed + joursParMois;
             }
             let solde1er = solde.toFixed(2);
-            let posesThisMonth = moisConges[m] || 0;
+            let posesThisMonth = (moisConges[m] || 0).toFixed(2);
 
             let monthCell = document.createElement('td');
             monthCell.className = 'month-name-cell';
@@ -943,7 +968,9 @@
             if (conges[dateStr] && conges[dateStr] !== false) {
                 let d = new Date(dateStr);
                 let m = d.getMonth();
-                moisConges[m] = (moisConges[m] || 0) + 1;
+                let feteType = FETES[dateStr];
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                moisConges[m] = (moisConges[m] || 0) + fraction;
             }
         });
 
