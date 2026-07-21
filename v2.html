@@ -212,6 +212,27 @@
             box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
         }
 
+        .calendar-table td.today-highlight {
+            box-shadow: inset 0 0 0 2px #2196F3, 0 0 8px rgba(33, 150, 243, 0.6) !important;
+            background: #e3f2fd !important;
+        }
+
+        .calendar-table td.veille {
+            background: linear-gradient(135deg, #f5b041 0%, #f39c12 100%);
+            color: white;
+            border: 2px solid #d68910;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(245, 176, 65, 0.3);
+        }
+
+        .calendar-table td.today {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: 2px solid #1f618d;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+        }
+
         .calendar-table td:hover:not(.other-month):not(.fete) {
             background: #f0f2ff;
             border-color: #667eea;
@@ -404,14 +425,33 @@
         '2026-04-01': 'Pessah',
         '2026-04-08': 'Pessah',
         '2026-05-21': 'Shavouot',
+        '2026-09-10': 'Veille RH',
         '2026-09-11': 'Rosh H.',
         '2026-09-12': 'Rosh H.',
         '2026-09-13': 'Rosh H.',
+        '2026-09-20': 'Veille Kip',
         '2026-09-21': 'Kippour',
+        '2026-09-24': 'Veille Sou',
         '2026-09-25': 'Souccot',
         '2026-09-26': 'Souccot',
+        '2026-09-27': 'Hol Ham.',
+        '2026-09-28': 'Hol Ham.',
+        '2026-09-29': 'Hol Ham.',
+        '2026-09-30': 'Hol Ham.',
+        '2026-10-01': 'Hol Ham.',
+        '2026-10-02': 'Hol Ham.',
         '2026-10-03': 'Simhat',
         '2026-10-04': 'Simhat',
+    };
+
+    const VEILLES = {
+        '2026-03-31': 'Veille Pessah',
+        '2026-04-07': 'Veille Pessah',
+        '2026-05-20': 'Veille Shavouot',
+        '2026-09-10': 'Veille Rosh H.',
+        '2026-09-20': 'Veille Kippour',
+        '2026-09-24': 'Veille Souccot',
+        '2026-10-02': 'Veille Simhat',
     };
 
     let conges = {};
@@ -715,6 +755,9 @@
         table.innerHTML = '';
 
         let monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        let now = new Date();
+        let todayMonth = now.getMonth();
+        let todayDate = now.getDate();
 
         // Header
         let headerRow = document.createElement('tr');
@@ -733,9 +776,32 @@
         for (let m = 0; m < 12; m++) {
             let row = document.createElement('tr');
 
+            // Calculer jours restants
+            let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 11.12;
+            let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 1.67;
+            
+            let moisConges = {};
+            Object.keys(conges).forEach(dateStr => {
+                if (conges[dateStr] && conges[dateStr] !== false) {
+                    let d = new Date(dateStr);
+                    let mIndex = d.getMonth();
+                    moisConges[mIndex] = (moisConges[mIndex] || 0) + 1;
+                }
+            });
+
+            let solde = soldeDebut;
+            for (let prevM = 0; prevM < m; prevM++) {
+                let posed = moisConges[prevM] || 0;
+                solde = solde - posed + joursParMois;
+            }
+            let posed = moisConges[m] || 0;
+            let soldeApres = solde - posed + joursParMois;
+            let joursRestants = soldeApres.toFixed(2);
+
             let monthCell = document.createElement('td');
             monthCell.className = 'month-name-cell';
-            monthCell.innerText = monthNames[m];
+            monthCell.innerHTML = `<strong>${monthNames[m]}</strong><br><small>${joursRestants}j</small>`;
+            monthCell.style.fontSize = '9px';
             row.appendChild(monthCell);
 
             let lastDay = new Date(2026, m + 1, 0).getDate();
@@ -752,7 +818,9 @@
                     let isConge = conges[dateStr];
                     let dayOfWeek = new Date(2026, m, d).getDay();
                     let isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+                    let isToday = (m === todayMonth && d === todayDate);
 
+                    if (isToday) cell.classList.add('today-highlight');
                     if (isWeekend) cell.classList.add('weekend');
                     if (isFete) {
                         cell.classList.add('fete');
