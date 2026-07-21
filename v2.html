@@ -789,7 +789,7 @@
         // Header
         let headerRow = document.createElement('tr');
         let monthHeader = document.createElement('th');
-        monthHeader.innerText = 'Mois / Posés';
+        monthHeader.innerText = 'Mois / Solde 1er';
         headerRow.appendChild(monthHeader);
 
         for (let d = 1; d <= 31; d++) {
@@ -799,26 +799,37 @@
         }
         table.appendChild(headerRow);
 
+        // Compter les jours posés par mois
+        let moisConges = {};
+        Object.keys(conges).forEach(dateStr => {
+            if (conges[dateStr] && conges[dateStr] !== false) {
+                let d = new Date(dateStr);
+                let mIndex = d.getMonth();
+                moisConges[mIndex] = (moisConges[mIndex] || 0) + 1;
+            }
+        });
+
+        let soldeDebut = parseFloat(document.getElementById('soldeDebut').value) || 11.12;
+        let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 1.67;
+
         // Rows
         for (let m = 0; m < 12; m++) {
             let row = document.createElement('tr');
 
-            // Compter les jours posés ce mois
-            let moisConges = {};
-            Object.keys(conges).forEach(dateStr => {
-                if (conges[dateStr] && conges[dateStr] !== false) {
-                    let d = new Date(dateStr);
-                    let mIndex = d.getMonth();
-                    moisConges[mIndex] = (moisConges[mIndex] || 0) + 1;
-                }
-            });
-
+            // Calculer solde au 1er du mois
+            let solde = soldeDebut;
+            for (let prevM = 0; prevM < m; prevM++) {
+                let posed = moisConges[prevM] || 0;
+                solde = solde - posed + joursParMois;
+            }
+            let solde1er = solde.toFixed(2);
             let posesThisMonth = moisConges[m] || 0;
 
             let monthCell = document.createElement('td');
             monthCell.className = 'month-name-cell';
-            monthCell.innerHTML = `<strong>${monthNames[m]}</strong><br><small>${posesThisMonth}</small>`;
-            monthCell.style.fontSize = '9px';
+            monthCell.innerHTML = `<strong>${monthNames[m]}</strong><br><small>${solde1er}</small><br><small>(${posesThisMonth})</small>`;
+            monthCell.style.fontSize = '8px';
+            monthCell.style.lineHeight = '1.2';
             row.appendChild(monthCell);
 
             let lastDay = new Date(2026, m + 1, 0).getDate();
