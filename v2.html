@@ -185,6 +185,19 @@
             right: 2px;
         }
 
+        .calendar-table td.demi::after {
+            content: '';
+            display: block;
+            width: 7px;
+            height: 7px;
+            background: #ff6666;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            opacity: 0.7;
+        }
+
         .calendar-table td {
             border: 1px solid #ddd;
             padding: 0;
@@ -457,26 +470,50 @@
     ];
 
     const FETES = {
-        '2026-04-01': 'fete',
-        '2026-04-08': 'fete',
-        '2026-05-21': 'fete',
-        '2026-09-10': 'veille',
-        '2026-09-11': 'fete',
-        '2026-09-12': 'fete',
-        '2026-09-13': 'fete',
-        '2026-09-20': 'veille',
-        '2026-09-21': 'fete',
-        '2026-09-24': 'veille',
-        '2026-09-25': 'fete',
-        '2026-09-26': 'fete',
-        '2026-09-27': 'hol_hamoed',
-        '2026-09-28': 'hol_hamoed',
-        '2026-09-29': 'hol_hamoed',
-        '2026-09-30': 'hol_hamoed',
-        '2026-10-01': 'hol_hamoed',
-        '2026-10-02': 'hol_hamoed',
-        '2026-10-03': 'fete',
-        '2026-10-04': 'fete',
+        // PESSAH (1-9 avril)
+        '2026-04-01': 'veille',          // Veille Pessah (mercredi)
+        '2026-04-02': 'fete',            // Pessah 1er jour (jeudi)
+        '2026-04-03': 'fete',            // Pessah 2e jour (vendredi)
+        '2026-04-04': 'hol_hamoed',      // Hol Hamoed (samedi)
+        '2026-04-05': 'hol_hamoed',      // Hol Hamoed (dimanche)
+        '2026-04-06': 'hol_hamoed',      // Hol Hamoed (lundi)
+        '2026-04-07': 'hol_hamoed',      // Hol Hamoed (mardi)
+        '2026-04-08': 'fete',            // Pessah 7e jour (mercredi)
+        '2026-04-09': 'fete',            // Pessah 8e jour (jeudi)
+        
+        // SHAVOUOT (21-23 mai)
+        '2026-05-21': 'fete',            // Shavouot 1er jour (jeudi)
+        '2026-05-22': 'fete',            // Shavouot 2e jour (vendredi)
+        
+        // ROSH HASHANA (10-12 septembre)
+        '2026-09-10': 'veille',          // Veille Rosh Hashana (jeudi)
+        '2026-09-11': 'fete',            // Rosh Hashana 1er jour (vendredi)
+        '2026-09-12': 'fete',            // Rosh Hashana 2e jour (samedi)
+        
+        // YOM KIPPOUR (20-21 septembre)
+        '2026-09-20': 'veille',          // Veille Yom Kippour (dimanche)
+        '2026-09-21': 'fete',            // Yom Kippour (lundi)
+        
+        // SOUCCOT (24 sept - 2 oct)
+        '2026-09-24': 'veille',          // Veille Souccot (jeudi)
+        '2026-09-25': 'fete',            // Souccot 1er jour (vendredi)
+        '2026-09-26': 'fete',            // Souccot 2e jour (samedi)
+        '2026-09-27': 'hol_hamoed',      // Hol Hamoed (dimanche)
+        '2026-09-28': 'hol_hamoed',      // Hol Hamoed (lundi)
+        '2026-09-29': 'hol_hamoed',      // Hol Hamoed (mardi)
+        '2026-09-30': 'hol_hamoed',      // Hol Hamoed (mercredi)
+        '2026-10-01': 'hol_hamoed',      // Hol Hamoed (jeudi) - Hoshaana Rabba
+        '2026-10-02': 'fete',            // Simhat Torah (vendredi)
+        
+        // HANOUCCA (6-13 décembre) - 8 jours, pas de jours chômés en Israël
+        '2026-12-06': 'fete',            // Hanoucca jour 1 (dimanche)
+        '2026-12-07': 'fete',            // Hanoucca jour 2 (lundi)
+        '2026-12-08': 'fete',            // Hanoucca jour 3 (mardi)
+        '2026-12-09': 'fete',            // Hanoucca jour 4 (mercredi)
+        '2026-12-10': 'fete',            // Hanoucca jour 5 (jeudi)
+        '2026-12-11': 'fete',            // Hanoucca jour 6 (vendredi)
+        '2026-12-12': 'fete',            // Hanoucca jour 7 (samedi)
+        '2026-12-13': 'fete',            // Hanoucca jour 8 (dimanche)
     };
 
     const VEILLES = {
@@ -758,8 +795,10 @@
 
     // ===== CONGÉS =====
 
-    function calculerFractionJour(dateStr, feteType) {
-        // Calcule la fraction de jour basée sur le type et le jour de la semaine
+    function calculerFractionJour(dateStr, feteType, congeType) {
+        // congeType = "normal" ou "demi" (uniquement pour jours non-fête)
+        // feteType = "veille", "hol_hamoed", "fete", ou null
+        
         let date = new Date(dateStr);
         let dayOfWeek = date.getDay();
         
@@ -778,14 +817,18 @@
         
         // Calcul basé sur le type de jour
         if (feteType === 'veille') {
-            // Veille = 4h
+            // Veille = 4h (ne peut pas être demi)
             return (4 / heuresJour).toFixed(3);
         } else if (feteType === 'hol_hamoed') {
-            // Hol Hamoed = 6h
+            // Hol Hamoed = 6h (ne peut pas être demi)
             return (6 / heuresJour).toFixed(3);
         } else {
-            // Jour normal ou fête = 1 jour
-            return 1;
+            // Jour normal - applique le type
+            if (congeType === 'demi') {
+                return (0.5).toFixed(3);  // Demi-journée = 0.5 jour
+            } else {
+                return 1;  // Jour normal = 1 jour
+            }
         }
     }
 
@@ -846,7 +889,8 @@
         Object.keys(conges).forEach(dateStr => {
             if (conges[dateStr] && conges[dateStr] !== false) {
                 let feteType = FETES[dateStr];
-                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                let congeType = conges[dateStr];  // "normal" ou "demi"
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType, congeType));
                 totalPosed += fraction;
             }
         });
@@ -885,7 +929,8 @@
                 let d = new Date(dateStr);
                 let mIndex = d.getMonth();
                 let feteType = FETES[dateStr];
-                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                let congeType = conges[dateStr];  // "normal" ou "demi"
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType, congeType));
                 moisConges[mIndex] = (moisConges[mIndex] || 0) + fraction;
             }
         });
@@ -947,6 +992,9 @@
                         // PUIS ajouter conge si coché (s'ajoute aux classes précédentes)
                         if (isConge) {
                             cell.classList.add('conge');
+                            if (isConge === 'demi') {
+                                cell.classList.add('demi');
+                            }
                         }
                         
                         cell.innerText = d;
@@ -963,10 +1011,16 @@
     }
 
     function toggleConge(dateStr) {
-        if (conges[dateStr]) {
+        // Cycle entre : non-coché → normal → demi → non-coché
+        if (!conges[dateStr]) {
+            // Non-coché → normal
+            conges[dateStr] = "normal";
+        } else if (conges[dateStr] === "normal") {
+            // Normal → demi
+            conges[dateStr] = "demi";
+        } else if (conges[dateStr] === "demi") {
+            // Demi → non-coché
             delete conges[dateStr];
-        } else {
-            conges[dateStr] = true;
         }
         
         try {
@@ -993,7 +1047,8 @@
                 let d = new Date(dateStr);
                 let m = d.getMonth();
                 let feteType = FETES[dateStr];
-                let fraction = parseFloat(calculerFractionJour(dateStr, feteType));
+                let congeType = conges[dateStr];  // "normal" ou "demi"
+                let fraction = parseFloat(calculerFractionJour(dateStr, feteType, congeType));
                 moisConges[m] = (moisConges[m] || 0) + fraction;
             }
         });
