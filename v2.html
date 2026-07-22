@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synerion v2 - Temps & Congés</title>
+    <title>MySynerion v2 - Temps & Congés</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -166,10 +166,10 @@
         .calendar-table th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 10px 4px;
+            padding: 8px 4px;
             text-align: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             border: none;
         }
 
@@ -201,7 +201,7 @@
         .calendar-table td {
             border: 1px solid #ddd;
             padding: 0;
-            height: 24px;
+            height: 32px;
             width: 24px;
             min-width: 24px;
             text-align: center;
@@ -288,7 +288,13 @@
             color: white;
             font-weight: bold;
             width: 80px;
+            min-width: 80px;
             border: none;
+            font-size: 10px;
+            line-height: 1.3;
+            padding: 6px 4px !important;
+            height: 65px;
+            vertical-align: middle;
         }
 
         /* RÉSUMÉ */
@@ -326,15 +332,15 @@
             .param-row { grid-template-columns: 1fr; }
             .calendar-table { font-size: 9px; }
             .calendar-table th { padding: 4px 1px; font-size: 9px; }
-            .calendar-table td { height: 20px; width: 20px; min-width: 20px; }
-            .month-name-cell { width: 45px; font-size: 9px; }
+            .calendar-table td { height: 28px; width: 20px; min-width: 20px; }
+            .month-name-cell { width: 45px; font-size: 9px; height: 60px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>⏱️ Synerion v2 - Temps & Congés</h2>
+    <h2>⏱️ MySynerion v2 - Temps & Congés</h2>
 
     <!-- TABS -->
     <div class="tabs">
@@ -953,9 +959,7 @@
 
             let monthCell = document.createElement('td');
             monthCell.className = 'month-name-cell';
-            monthCell.innerHTML = `<strong>${monthNames[m]}</strong><br><small>${solde1er}</small><br><small>(${posesThisMonth})</small>`;
-            monthCell.style.fontSize = '8px';
-            monthCell.style.lineHeight = '1.2';
+            monthCell.innerHTML = `<div style="font-size: 11px;"><strong>${monthNames[m]}</strong></div><div style="font-size: 10px;">${solde1er}</div><div style="font-size: 9px;">(${posesThisMonth})</div>`;
             row.appendChild(monthCell);
 
             let lastDay = new Date(2026, m + 1, 0).getDate();
