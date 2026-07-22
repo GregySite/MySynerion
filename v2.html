@@ -385,6 +385,14 @@
         <div class="conges-header">
             <h3>🏖️ Congés Payés</h3>
             
+            <div style="margin-bottom: 15px;">
+                <label style="color: white; font-weight: bold; margin-right: 10px;">Base Horaire :</label>
+                <select id="baseHoraireConges" onchange="changerBaseConges()" style="padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; color: #222; font-size: 13px; background: #fff;">
+                    <option value="9">Base 9 (Dim-Mer: 9h | Jeu: 8h)</option>
+                    <option value="8">Base 8 (Dim-Mer: 8h | Jeu: 7,12h)</option>
+                </select>
+            </div>
+            
             <div class="param-row">
                 <div class="param-item">
                     <label>Jours / An</label>
@@ -755,8 +763,18 @@
         let date = new Date(dateStr);
         let dayOfWeek = date.getDay();
         
-        // Heures du jour : 9h (dim-mer), 8h (jeudi)
-        let heuresJour = (dayOfWeek === 4) ? 8 : 9;
+        // Récupérer la base horaire
+        let base = localStorage.getItem('synBaseHoraire') || "9";
+        
+        // Déterminer les heures du jour selon la base
+        let heuresJour;
+        if (base === "9") {
+            // Base 9 : Dim-Mer 9h, Jeudi 8h
+            heuresJour = (dayOfWeek === 4) ? 8 : 9;
+        } else {
+            // Base 8 : Dim-Mer 8h, Jeudi 7.12h
+            heuresJour = (dayOfWeek === 4) ? 7.12 : 8;
+        }
         
         // Calcul basé sur le type de jour
         if (feteType === 'veille') {
@@ -769,6 +787,12 @@
             // Jour normal ou fête = 1 jour
             return 1;
         }
+    }
+
+    function changerBaseConges() {
+        let base = document.getElementById('baseHoraireConges').value;
+        localStorage.setItem('synBaseHoraire', base);
+        recalculerConges();
     }
 
     function sauvegarderParams() {
@@ -1024,6 +1048,10 @@
     // Init
     window.onload = function() {
         genererMois();
+        
+        // Charger la base horaire
+        let baseHoraire = localStorage.getItem('synBaseHoraire') || "9";
+        document.getElementById('baseHoraireConges').value = baseHoraire;
         
         // Charger les paramètres sauvegardés
         chargerParams();
