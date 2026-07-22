@@ -829,11 +829,13 @@
         
         // Calcul basé sur le type de jour
         if (feteType === 'veille') {
-            // Veille = 4h (ne peut pas être demi)
-            return (4 / heuresJour).toFixed(3);
+            // Veille : 4h en Base 9, 3.55h en Base 8
+            let heuresVeille = (base === "9") ? 4 : 3.55;
+            return (heuresVeille / heuresJour).toFixed(3);
         } else if (feteType === 'hol_hamoed') {
-            // Hol Hamoed = 6h (ne peut pas être demi)
-            return (6 / heuresJour).toFixed(3);
+            // Hol Hamoed : 6h en Base 9, 5.33h en Base 8
+            let heuresHolHamoed = (base === "9") ? 6 : 5.33;
+            return (heuresHolHamoed / heuresJour).toFixed(3);
         } else {
             // Jour normal - applique le type
             if (congeType === 'demi') {
