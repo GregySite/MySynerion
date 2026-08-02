@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Synerion Officiel</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #222; font-size: 13px; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
+        
+        h2 { text-align: center; color: #1877f2; margin: 0 0 20px 0; font-size: 20px; }
+
+        /* HEADER UNIFIÉ (TOUT EN UN) */
+        .unified-header {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4a5b6c;
+        }
+        .header-actions h3 { margin: 0; font-size: 18px; color: #fff; }
+        
+        .controls { display: flex; gap: 15px; align-items: center; }
+        .controls select { padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; color: #222; font-size: 13px; background: #fff; }
+        
+        .btn-import { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; transition: 0.2s; border: none; }
+        .btn-import:hover { background: #357abd; }
+        input[type="file"] { display: none; }
+
+        .dashboard-top { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            align-items: center;
+        }
+        .box { text-align: center; border-right: 1px solid #4a5b6c; padding: 0 5px; }
+        .box:last-child { border-right: none; }
+        .box .box-title { display: block; font-size: 0.8em; color: #bdc3c7; text-transform: uppercase; margin-bottom: 8px; font-weight: bold;}
+        .box span, .box b { font-size: 1.4em; display: block; }
+        
+        .box input[type="text"] { width: 75px; padding: 5px; text-align: center; border-radius: 4px; border: none; font-weight: bold; font-family: monospace; font-size: 1.2em; color: #222; }
+        
+        .bal-pos { color: #2ecc71; font-weight: bold; }
+        .bal-neg { color: #e74c3c; font-weight: bold; }
+        .bal-zero { color: #ffffff; font-weight: bold; }
+        .dep-normal { color: #3498db; font-weight: bold; }
+        .dep-ajuste { color: #e74c3c; font-weight: bold; background: #fff; padding: 2px 5px; border-radius: 4px; display: inline-block; }
+
+        /* TABLEAU */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #e9ecef; color: #333; padding: 10px; font-size: 13px; border: 1px solid #ddd; }
+        td { padding: 8px; border: 1px solid #eee; text-align: center; vertical-align: middle; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        .today-row { background-color: #e6f2ff !important; border: 2px solid #007bff; }
+        
+        td input[type="text"] { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #333; font-family: monospace;}
+        td input[type="text"]:focus { border-color: #007bff; outline: none; background: #f0f8ff; }
+        td select { width: 75px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight:bold; color: #555; background: #f8f9fa; cursor: pointer;}
+        td select:focus { border-color: #007bff; outline: none; }
+        .val-cumul { color: #007bff; font-weight: bold; }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 768px) {
+            .header-actions { flex-direction: column; align-items: stretch; gap: 15px; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .btn-import { text-align: center; }
+            .dashboard-top { grid-template-columns: 1fr 1fr; row-gap: 20px; }
+            .box:nth-child(2) { border-right: none; }
+            .box span, .box b { font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⏱ Tableau de Bord Synerion</h2>
+
+    <div class="unified-header">
+        <div class="header-actions">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <h3 id="monthTitle">Mois en cours</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <select id="baseHoraire" onchange="changerBase()">
+                        <option value="9">Base 9</option>
+                        <option value="8">Base 8</option>
+                    </select>
+                    <span id="baseDesc" style="color: #95a5a6; font-size: 11px; font-weight: normal;"></span>
+                </div>
+            </div>
+            <div class="controls">
+                <label for="excelFileInput" class="btn-import">📥 Mettre à jour (Excel)</label>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="importerFichierExcel(event)">
+            </div>
+        </div>
+
+        <div class="dashboard-top">
+            <div class="box">
+                <span class="box-title">Avance/Retard Cumulé</span>
+                <span id="globalBalance" class="bal-zero">00:00</span>
+            </div>
+            <div class="box">
+                <span class="box-title">Arrivée Aujourd'hui</span>
+                <input type="text" id="todayArrival" placeholder="HH:MM" oninput="formatTime(event); calculerTout();" maxlength="5">
+            </div>
+            <div class="box">
+                <span class="box-title">Départ Normal</span>
+                <b id="normalDepart" class="dep-normal">--:--</b>
+            </div>
+            <div class="box">
+                <span class="box-title">Départ Ajusté</span>
+                <b id="adjustedDepart" class="dep-ajuste">--:--</b>
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Objectif</th>
+                    <th>Temps Travaillé</th>
+                    <th>Solde du Jour</th>
+                    <th>Avance Globale</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+
+    const OBJECTIVES = [
+        { text: "0", val: "00:00" },
+        { text: "3.55", val: "03:33" }, 
+        { text: "4", val: "04:00" },
+        { text: "5", val: "05:00" },
+        { text: "5.33", val: "05:20" },
+        { text: "6", val: "06:00" },
+        { text: "7", val: "07:00" },
+        { text: "7.12", val: "07:07" }, 
+        { text: "8", val: "08:00" },
+        { text: "9", val: "09:00" }
+    ];
+
+    function formatTime(e) {
+        let v = e.target.value;
+        if (e.inputType === 'deleteContentBackward') return;
+        let clean = v.replace(/[^0-9]/g, '');
+        if (clean.length >= 2) {
+            clean = clean.substring(0, 2) + ':' + clean.substring(2, 4);
+        }
+        e.target.value = clean;
+    }
+
+    function timeToMins(t) {
+        if (!t) return 0;
+        let sign = t.startsWith('-') ? -1 : 1;
+        let p = t.replace(/[+-]/g, '').split(':');
+        if (p.length < 2) return 0;
+        return sign * (parseInt(p[0]) * 60 + parseInt(p[1]));
+    }
+
+    function minsToTime(m, showSign = false, isClock = false) {
+        if (isNaN(m)) return "--:--";
+        let sign = m < 0 ? "-" : (showSign && m > 0 ? "+" : "");
+        let abs = Math.abs(m);
+        let h = Math.floor(abs / 60);
+        if (isClock) h = h % 24;
+        let min = abs % 60;
+        return sign + (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
+    }
+
+    function changerBase() {
+        let base = document.getElementById('baseHoraire').value;
+        localStorage.setItem('synBaseHoraire', base);
+        genererMois(); 
+    }
+
+    function getDefaultReqH(dayOfWeek) {
+        let base = localStorage.getItem('synBaseHoraire') || "9";
+        if (base === "9") {
+            return (dayOfWeek === 4) ? "08:00" : "09:00";
+        } else {
+            return (dayOfWeek === 4) ? "07:07" : "08:00";
+        }
+    }
+
+    function genererMois() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = now.getMonth();
+        let daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        let monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+        document.getElementById('monthTitle').innerText = `${monthNames[month]} ${year}`;
+
+        let baseHoraire = localStorage.getItem('synBaseHoraire') || "9";
+        document.getElementById('baseHoraire').value = baseHoraire;
+        document.getElementById('baseDesc').innerText = baseHoraire === "9" 
+            ? "(Dim-Mer: 9h | Jeu: 8h)" 
+            : "(Dim-Mer: 8h | Jeu: 7,12h)";
+
+        let savedData = JSON.parse(localStorage.getItem('synDataV3')) || {};
+        let savedObj = JSON.parse(localStorage.getItem('synObjConfig')) || {};
+        
+        let tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            let d = new Date(year, month, i);
+            let dayOfWeek = d.getDay();
+            if (dayOfWeek === 5 || dayOfWeek === 6) continue;
+
+            let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+            
+            let defaultReqH = getDefaultReqH(dayOfWeek);
+            let reqH = savedObj[dateKey] !== undefined ? savedObj[dateKey] : defaultReqH;
+            
+            let workVal = savedData[dateKey] || "";
+
+            let optionsHTML = '';
+            OBJECTIVES.forEach(obj => {
+                let selected = (obj.val === reqH) ? 'selected' : '';
+                optionsHTML += `<option value="${obj.val}" ${selected}>${obj.text}h</option>`;
+            });
+
+            let tr = document.createElement('tr');
+            if (i === now.getDate()) tr.className = "today-row"; 
+
+            tr.innerHTML = `
+                <td>${DAYS[dayOfWeek]} ${i.toString().padStart(2,'0')}/${(month+1).toString().padStart(2,'0')}</td>
+                <td><select id="obj_${dateKey}" onchange="calculerTout()">${optionsHTML}</select></td>
+                <td><input type="text" id="work_${dateKey}" value="${workVal}" placeholder="HH:MM" oninput="formatTime(event); calculerTout();" maxlength="5"></td>
+                <td id="solde_${dateKey}">--:--</td>
+                <td id="cumul_${dateKey}" class="val-cumul">--:--</td>
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        if (savedData['todayArrivalDate'] === `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`) {
+            document.getElementById('todayArrival').value = savedData['todayArrivalTime'] || "";
+        }
+        
+        calculerTout();
+    }
+
+    function calculerTout() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = now.getMonth();
+        let daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        let cumulativeMins = 0; 
+        let dataToSave = {};
+        let objToSave = {};
+
+        let todayArrival = document.getElementById('todayArrival').value;
+        if (todayArrival) {
+            dataToSave['todayArrivalTime'] = todayArrival;
+            dataToSave['todayArrivalDate'] = `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            let d = new Date(year, month, i);
+            let dayOfWeek = d.getDay();
+            if (dayOfWeek === 5 || dayOfWeek === 6) continue;
+
+            let dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+            let defaultReqH = getDefaultReqH(dayOfWeek);
+
+            let objSelect = document.getElementById(`obj_${dateKey}`);
+            let reqMins = objSelect ? timeToMins(objSelect.value) : timeToMins(defaultReqH);
+            
+            if (objSelect && objSelect.value !== defaultReqH) {
+                objToSave[dateKey] = objSelect.value;
+            }
+            
+            let workInput = document.getElementById(`work_${dateKey}`);
+            let soldeTd = document.getElementById(`solde_${dateKey}`);
+            let cumulTd = document.getElementById(`cumul_${dateKey}`);
+
+            if (!workInput) continue;
+            let workTime = workInput.value;
+
+            if (workTime && workTime.length >= 4) {
+                dataToSave[dateKey] = workTime;
+                let workedMins = timeToMins(workTime);
+                let dailyBal = workedMins - reqMins;
+                
+                soldeTd.innerText = minsToTime(dailyBal, true);
+                soldeTd.style.color = dailyBal >= 0 ? "#28a745" : "#d9534f";
+
+                cumulativeMins += dailyBal;
+                cumulTd.innerText = minsToTime(cumulativeMins, true);
+            } else {
+                soldeTd.innerText = "--:--";
+                if (d < new Date(year, month, now.getDate())) {
+                    cumulTd.innerText = minsToTime(cumulativeMins, true);
+                } else {
+                    cumulTd.innerText = "--:--";
+                }
+            }
+        }
+
+        let globalBox = document.getElementById('globalBalance');
+        globalBox.innerText = minsToTime(cumulativeMins, true);
+        if (cumulativeMins > 0) globalBox.className = "bal-pos";
+        else if (cumulativeMins < 0) globalBox.className = "bal-neg";
+        else globalBox.className = "bal-zero";
+
+        let todayDateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+        let todayObjSelect = document.getElementById(`obj_${todayDateKey}`);
+        let reqTodayMins = todayObjSelect ? timeToMins(todayObjSelect.value) : timeToMins(getDefaultReqH(now.getDay()));
+
+        if (todayArrival && todayArrival.length >= 4) {
+            let arrMins = timeToMins(todayArrival);
+            let normalMins = arrMins + reqTodayMins;
+            let ajustedMins = normalMins - cumulativeMins;
+
+            document.getElementById('normalDepart').innerText = minsToTime(normalMins, false, true);
+            document.getElementById('adjustedDepart').innerText = minsToTime(ajustedMins, false, true);
+        } else {
+            document.getElementById('normalDepart').innerText = "--:--";
+            document.getElementById('adjustedDepart').innerText = "--:--";
+        }
+
+        localStorage.setItem('synDataV3', JSON.stringify(dataToSave));
+        localStorage.setItem('synObjConfig', JSON.stringify(objToSave));
+    }
+
+    function importerFichierExcel(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let firstSheetName = workbook.SheetNames[0];
+            let worksheet = workbook.Sheets[firstSheetName];
+            
+            let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, defval: ""});
+            
+            let now = new Date();
+            let year = now.getFullYear();
+            let todayStr = `${year}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+            
+            let savedData = JSON.parse(localStorage.getItem('synDataV3')) || {};
+            let countPast = 0;
+            let arrivalFound = false;
+
+            for (let i = 0; i < rows.length; i++) {
+                let r = rows[i];
+                
+                let dIndex = -1;
+                for(let j = 0; j < r.length; j++) {
+                    if (r[j] && r[j].toString().match(/(\d{2})\/(\d{2})/)) {
+                        dIndex = j;
+                        break;
+                    }
+                }
+
+                if (dIndex !== -1) {
+                    let dateStr = r[dIndex].toString();
+                    let dMatch = dateStr.match(/(\d{2})\/(\d{2})/);
+                    let jour = dMatch[1];
+                    let mois = dMatch[2];
+                    let dateKey = `${year}-${mois}-${jour}`;
+                    let isToday = (dateKey === todayStr);
+
+                    if (isToday) {
+                        if (r.length > dIndex + 1 && r[dIndex + 1]) {
+                            let arrStr = r[dIndex + 1].toString();
+                            let arrMatch = arrStr.match(/(\d{1,2})[:.](\d{2})/);
+                            if (arrMatch) {
+                                document.getElementById('todayArrival').value = arrMatch[1].padStart(2, '0') + ":" + arrMatch[2];
+                                arrivalFound = true;
+                            }
+                        }
+                    } else {
+                        let durationStr = "";
+                        if (r.length > dIndex + 31 && r[dIndex + 31].toString().match(/(\d{1,2})[:.](\d{2})/)) {
+                            durationStr = r[dIndex + 31].toString();
+                        } else if (r.length > dIndex + 32 && r[dIndex + 32].toString().match(/(\d{1,2})[:.](\d{2})/)) {
+                            durationStr = r[dIndex + 32].toString();
+                        }
+                        
+                        if (durationStr) {
+                            let wMatch = durationStr.match(/(\d{1,2})[:.](\d{2})/);
+                            if (wMatch) {
+                                savedData[dateKey] = wMatch[1].padStart(2, '0') + ":" + wMatch[2];
+                                countPast++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            localStorage.setItem('synDataV3', JSON.stringify(savedData));
+            genererMois(); 
+            document.getElementById('excelFileInput').value = ''; 
+            
+            alert(`✅ Excel lu avec succès !\n\n- ${countPast} jour(s) passé(s) mis à jour.\n- Arrivée aujourd'hui : ${arrivalFound ? 'Détectée avec succès !' : 'Non détectée.'}`);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    window.onload = genererMois;
+</script>
+
+</body>
+</html>
