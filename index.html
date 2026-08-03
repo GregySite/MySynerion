@@ -490,7 +490,8 @@
         '2026-04-08': 'fete',            // Pessah 7e jour (mercredi)
         '2026-04-09': 'fete',            // Pessah 8e jour (jeudi)
         
-        // SHAVOUOT (21-23 mai)
+        // SHAVOUOT (20-22 mai)
+        '2026-05-20': 'veille',            // Veille Shavouot (mercredi)
         '2026-05-21': 'fete',            // Shavouot 1er jour (jeudi)
         '2026-05-22': 'fete',            // Shavouot 2e jour (vendredi)
         
@@ -842,7 +843,8 @@
     function changerBaseConges() {
         let base = document.getElementById('baseHoraireConges').value;
         localStorage.setItem('synBaseHoraire', base);
-        recalculerConges();
+        // Recalculer les jours/mois avec la nouvelle base
+        recalculerMoisDepuisAn();
     }
 
     function sauvegarderParams() {
@@ -862,12 +864,16 @@
     function chargerParams() {
         try {
             let joursParAn = localStorage.getItem('synJoursParAn');
-            let joursParMois = localStorage.getItem('synJoursParMois');
             let soldeDebut = localStorage.getItem('synSoldeDebut');
             
-            if (joursParAn !== null && joursParAn !== '') document.getElementById('joursParAn').value = joursParAn;
-            if (joursParMois !== null && joursParMois !== '') document.getElementById('joursParMois').value = joursParMois;
-            if (soldeDebut !== null && soldeDebut !== '') document.getElementById('soldeDebut').value = soldeDebut;
+            if (joursParAn !== null && joursParAn !== '') {
+                document.getElementById('joursParAn').value = joursParAn;
+                // Recalculer joursParMois avec la base courante
+                recalculerMoisDepuisAn();
+            }
+            if (soldeDebut !== null && soldeDebut !== '') {
+                document.getElementById('soldeDebut').value = soldeDebut;
+            }
         } catch(e) {
             // localStorage non disponible
         }
@@ -875,18 +881,22 @@
 
     function recalculerMoisDepuisAn() {
         let joursParAn = parseFloat(document.getElementById('joursParAn').value) || 0;
+        let base = localStorage.getItem('synBaseHoraire') || "9";
         if (joursParAn > 0) {
-            let joursParMois = (joursParAn / 12).toFixed(2);
-            document.getElementById('joursParMois').value = joursParMois;
+            // Jours/Mois = (Jours/An / 12) × (base / 9)
+            let joursParMois = (joursParAn / 12) * (parseInt(base) / 9);
+            document.getElementById('joursParMois').value = joursParMois.toFixed(4);
         }
         recalculerConges();
     }
 
     function recalculerAnDepuisMois() {
         let joursParMois = parseFloat(document.getElementById('joursParMois').value) || 0;
+        let base = localStorage.getItem('synBaseHoraire') || "9";
         if (joursParMois > 0) {
-            let joursParAn = (joursParMois * 12).toFixed(2);
-            document.getElementById('joursParAn').value = joursParAn;
+            // Jours/An = (Jours/Mois × 12 × 9) / base
+            let joursParAn = (joursParMois * 12 * 9) / parseInt(base);
+            document.getElementById('joursParAn').value = joursParAn.toFixed(2);
         }
         recalculerConges();
     }
