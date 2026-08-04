@@ -819,21 +819,21 @@
         if (feteType === 'veille') {
             // Veille : 4h / 9 en Base 9, 3.55h / 8 en Base 8
             if (base === "9") {
-                return (4 / 9).toFixed(3);      // ≈ 0.444
+                return (4 / 9).toFixed(4);      // ≈ 0.4444
             } else {
-                return (3.55 / 8).toFixed(3);   // ≈ 0.444
+                return (3.55 / 8).toFixed(4);   // ≈ 0.4438
             }
         } else if (feteType === 'hol_hamoed') {
             // Hol Hamoed : 6h / 9 en Base 9, 5.33h / 8 en Base 8
             if (base === "9") {
-                return (6 / 9).toFixed(3);      // ≈ 0.667
+                return (6 / 9).toFixed(4);      // ≈ 0.6667
             } else {
-                return (5.33 / 8).toFixed(3);   // ≈ 0.666
+                return (5.33 / 8).toFixed(4);   // ≈ 0.6663
             }
         } else {
             // Jour normal - applique le type
             if (congeType === 'demi') {
-                return (0.5).toFixed(3);  // Demi-journée = 0.5 jour
+                return (0.5).toFixed(4);  // Demi-journée = 0.5 jour
             } else {
                 return 1;  // Jour normal = 1 jour
             }
@@ -896,7 +896,7 @@
         if (joursParMois > 0) {
             // Jours/An = (Jours/Mois × 12 × 9) / base
             let joursParAn = (joursParMois * 12 * 9) / parseInt(base);
-            document.getElementById('joursParAn').value = joursParAn.toFixed(2);
+            document.getElementById('joursParAn').value = joursParAn.toFixed(4);
         }
         recalculerConges();
     }
@@ -911,6 +911,7 @@
                 totalPosed += fraction;
             }
         });
+        // Affichage seulement en 2 décimales, calcul interne en 4
         document.getElementById('totalPosed').value = totalPosed.toFixed(2);
         
         genererTableauCalendrier();
