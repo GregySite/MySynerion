@@ -470,11 +470,14 @@
 
     const OBJECTIVES = [
         { text: "0", val: "00:00" },
+        { text: "3.11", val: "03:07" },   // veille en Base 7
         { text: "3.55", val: "03:33" }, 
         { text: "4", val: "04:00" },
+        { text: "4.67", val: "04:40" },   // Hol Hamoed en Base 7
         { text: "5", val: "05:00" },
         { text: "5.33", val: "05:20" },
         { text: "6", val: "06:00" },
+        { text: "6.22", val: "06:13" },   // jeudi en Base 7
         { text: "7", val: "07:00" },
         { text: "7.12", val: "07:07" }, 
         { text: "8", val: "08:00" },
@@ -894,13 +897,19 @@
     // La paie calcule avec 20/12 = 1.666667, pas avec 1.67 : c'est toute la difference.
     let cumulMensuelPrecis = null;
 
+    // Facteur appliqué au gain mensuel selon la base.
+    // Base 7 : les congés sont crédités en base 9 (gain plein), seuls les jours posés sont en base 7.
+    function facteurGain(base) {
+        return base === "8" ? 8 / 9 : 1;
+    }
+
     function getCumulMensuel() {
         if (cumulMensuelPrecis !== null) return cumulMensuelPrecis;
         // Fallback : on redérive depuis Jours/An sans arrondir
         let joursParAn = parseFloat(document.getElementById('joursParAn').value) || 0;
         let base = localStorage.getItem('synBaseHoraire') || "9";
         if (joursParAn > 0) {
-            return (joursParAn / 12) * (parseInt(base) / 9);
+            return (joursParAn / 12) * facteurGain(base);
         }
         return parseFloat(document.getElementById('joursParMois').value) || 0;
     }
@@ -909,8 +918,8 @@
         let joursParAn = parseFloat(document.getElementById('joursParAn').value) || 0;
         let base = localStorage.getItem('synBaseHoraire') || "9";
         if (joursParAn > 0) {
-            // Jours/Mois = (Jours/An / 12) × (base / 9)
-            let joursParMois = (joursParAn / 12) * (parseInt(base) / 9);
+            // Jours/Mois = (Jours/An / 12) × facteurGain(base)
+            let joursParMois = (joursParAn / 12) * facteurGain(base);
             cumulMensuelPrecis = joursParMois;   // valeur exacte gardée pour les calculs
             document.getElementById('joursParMois').value = joursParMois.toFixed(2);
         }
@@ -926,8 +935,8 @@
             let memeArrondi = cumulMensuelPrecis !== null
                 && Math.round(cumulMensuelPrecis * 100) === Math.round(joursParMois * 100);
             if (!memeArrondi) cumulMensuelPrecis = joursParMois;
-            // Jours/An = (Jours/Mois × 12 × 9) / base
-            let joursParAn = (joursParMois * 12 * 9) / parseInt(base);
+            // Jours/An = Jours/Mois × 12 / facteurGain(base)
+            let joursParAn = (joursParMois * 12) / facteurGain(base);
             document.getElementById('joursParAn').value = joursParAn.toFixed(2);
         }
         recalculerConges();
