@@ -820,27 +820,29 @@
         if (feteType === 'veille') {
             // Veille : 4h / 9 en Base 9, 3.55h / 8 en Base 8
             if (base === "9") {
-                return (4 / 9).toFixed(2);      // 0.44
+                return 4 / 9;      // 0.444
             } else {
-                return (3.55 / 8).toFixed(2);   // 0.44
+                return 3.55 / 8;   // 0.444
             }
         } else if (feteType === 'hol_hamoed') {
             // Hol Hamoed : 6h / 9 en Base 9, 5.33h / 8 en Base 8
             if (base === "9") {
-                return (6 / 9).toFixed(2);      // 0.67
+                return 6 / 9;      // 0.667
             } else {
-                return (5.33 / 8).toFixed(2);   // 0.67
+                return 5.33 / 8;   // 0.666
             }
         } else {
-            // Jour normal : la paie compte en heures ÷ heures d'un jour dim-mer.
+            // Pas d'arrondi par jour : l'arrondi à 2 décimales se fait sur le total du mois
+        // (sept. 2026 : 4 Hol Hamoed = 2.67 sur la fiche, et non 4 x 0.67 = 2.68).
+        // Jour normal : la paie compte en heures ÷ heures d'un jour dim-mer.
             // Le jeudi est plus court (8h en Base 9, 7h12 en Base 8) :
             // jeudi entier = 8/9 = 0.89 (Base 9) ou 7.2/8 = 0.90 (Base 8) — validé sur fiche juillet/août 2026
             let jeudi = new Date(dateStr + 'T12:00:00').getDay() === 4;
             let ratio = jeudi ? (base === "9" ? 8 / 9 : 7.2 / 8) : 1;
             if (congeType === 'demi') {
-                return (ratio / 2).toFixed(2);  // Demi-journée
+                return ratio / 2;  // Demi-journée
             } else {
-                return ratio.toFixed(2);        // Jour entier
+                return ratio;      // Jour entier
             }
         }
     }
@@ -1107,7 +1109,8 @@
         let solde = parseFloat(document.getElementById('soldeDebut').value) || 0;
         let res = [];
         for (let m = 0; m < 12; m++) {
-            let pose = moisConges[m] || 0;
+            // La paie arrondit le TOTAL du mois à 2 décimales (avril 2.22, juil. 0.89, août 10.78, sept. 2.67)
+            let pose = Math.round((moisConges[m] || 0) * 100) / 100;
             let finCalcule = solde - pose + gain;
             let fiche = (fichesPaie[m] !== undefined && fichesPaie[m] !== null) ? fichesPaie[m] : null;
             let fin = fiche !== null ? fiche : finCalcule;
